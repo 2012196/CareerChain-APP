@@ -1,0 +1,144 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                  Int                  @id @default(autoincrement())
+  walletAddress       String               @unique
+  account_type        String
+  slug                String               @unique
+  country             String?
+  city                String?
+  profileImage        String?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  PersonalAccount     PersonalAccount?
+  OrganizationAccount OrganizationAccount?
+  Activity            Activity[]
+}
+
+model PersonalAccount {
+  id                 Int                  @id @default(autoincrement())
+  name               String
+  job_title          String?
+  aboutMe            String               @default("Hey, I am new here nice to meet you")
+  awardedCertificate AwardedCertificate[]
+  AwardedPoints      AwardedPoints[]
+  Employement        Employees[]
+
+  // Define a relation to Account here.
+  account    Account @relation(fields: [account_id], references: [id])
+  account_id Int     @unique
+}
+
+model OrganizationAccount {
+  id                  Int                  @id @default(autoincrement())
+  name                String
+  website             String
+  aboutUs             String               @default("Hey, we are new here")
+  verified            Boolean              @default(false)
+  createdCertificate  Certificate[]
+  awardedCertificate  AwardedCertificate[]
+  activities          Activity[]
+  AwardedPoints       AwardedPoints[]
+  Employees           Employees[]
+  VerificationRequest VerificationRequest?
+
+  // Define a relation to Account here.
+  account    Account @relation(fields: [account_id], references: [id])
+  account_id Int     @unique
+}
+
+model Certificate {
+  id              Int      @id @default(autoincrement())
+  orgCertId       Int
+  transactionHash String?
+  createdAt       DateTime @default(now())
+
+  createdBy OrganizationAccount @relation(fields: [orgId], references: [id])
+  orgId     Int
+}
+
+model AwardedCertificate {
+  id              Int      @id @default(autoincrement())
+  orgCertId       Int
+  createdBy       String
+  transactionHash String
+  createdAt       DateTime @default(now())
+
+  awardedBy OrganizationAccount @relation(fields: [orgId], references: [id])
+  orgId     Int
+
+  awardedTo  PersonalAccount @relation(fields: [personalId], references: [id])
+  personalId Int
+}
+
+model AwardedPoints {
+  id              Int    @id @default(autoincrement())
+  amount          Int
+  reason          String
+  transactionHash String
+
+  awardedBy OrganizationAccount @relation(fields: [orgId], references: [id])
+  orgId     Int
+
+  awardedTo  PersonalAccount @relation(fields: [personalId], references: [id])
+  personalId Int
+
+  createdAt DateTime @default(now())
+}
+
+model Employees {
+  id              Int    @default(autoincrement())
+  transactionHash String
+
+  employeer OrganizationAccount @relation(fields: [orgId], references: [id])
+  orgId     Int
+
+  employee   PersonalAccount @relation(fields: [personalId], references: [id])
+  personalId Int
+
+  employementIndex Int
+
+  @@id([orgId, employementIndex])
+}
+
+model Activity {
+  id              Int          @id @default(autoincrement())
+  type            ActivityType
+  transactionHash String
+  createdAt       DateTime     @default(now())
+
+  amount Int?
+  reason String?
+
+  OrganizationAccount OrganizationAccount @relation(fields: [orgId], references: [id])
+  orgId               Int
+
+  Actor   Account @relation(fields: [actorId], references: [id])
+  actorId Int
+}
+
+enum ActivityType {
+  CertificateCreated
+  CertificateAwarded
+  PointsAwarded
+}
+
+model VerificationRequest {
+  id              Int    @id @default(autoincrement())
+  verificationKey String
+
+  OrganizationAccount OrganizationAccount @relation(fields: [orgId], references: [id])
+  orgId               Int                 @unique
+
+  createdAt DateTime @default(now())
+}

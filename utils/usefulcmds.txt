@@ -1,0 +1,10 @@
+npx create-next-app@latest
+
+npx hardhat run --network sepolia scripts/deploy.ts
+
+npx hardhat verify --network sepolia contract_addr 0xb1b7d75628171996b2e33CEFf96b9C46506Ba3dE
+
+npx prisma migrate dev
+npx prisma generate
+
+https://www.prisma.io/docs/orm/more/help-and-troubleshooting/help-articles/nextjs-prisma-client-dev-practices
